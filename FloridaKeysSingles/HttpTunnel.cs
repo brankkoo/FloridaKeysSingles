@@ -1,4 +1,5 @@
-﻿using HtmlAgilityPack;
+﻿using FloridaKeysSingles;
+using HtmlAgilityPack;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -8,19 +9,17 @@ using System.Net.Http;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Windows.Markup;
 
 namespace FloridaKeysSingles
 {
     public class HttpTunnel
     {
-        public async Task<Response> Login(string username,string password)
+        WebClientAware _webClient = new WebClientAware();
+
+        public async Task<Response> Login()
         {
-            var handler = new SocketsHttpHandler();
-
-
             using (var client = new HttpClient())
             {
 
@@ -46,8 +45,8 @@ namespace FloridaKeysSingles
                 {
                     {"form_name","sign-in" },
                     {crsfNode.Attributes["name"].Value, crsfValue },
-                    {"identity",$"{username}" },
-                    {"password",$"{password}"},
+                    {"identity","seven237" },
+                    {"password","Raisgod237"},
                     {"remember","on" },
 
 
@@ -91,8 +90,62 @@ namespace FloridaKeysSingles
                 }
             }
         }
+
+        public async Task<Response> PostData(string username, string password)
+        {
+            Response res = new Response();
+            try
+            {
+                string firstContact = await _webClient.DownloadStringTaskAsync("https://www.floridakeyssingles.com/");
+                var match = new Regex("name=\"csrf_token\" id=\"([^\"]*?)\" type=\"hidden\" value=\"([^\"]*?)\"").Match(firstContact);
+                var crsfValue = match.Groups[2].Value;
+
+                string url = "https://www.floridakeyssingles.com/base/user/ajax-sign-in/";
+
+                _webClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded; charset=utf-8";
+                _webClient.Headers.Add("x-requested-with", "XMLHttpRequest");
+                _webClient.Headers[HttpRequestHeader.Referer] = "https://www.floridakeyssingles.com/";
+                _webClient.Headers[HttpRequestHeader.Host] = "www.floridakeyssingles.com";
+                _webClient.Headers.Add("origin", "https://www.floridakeyssingles.com");
+                _webClient.Headers.Add("sec-fetch-mode", "cors");
+                _webClient.Headers.Add("sec-fetch-dest", "");
+                _webClient.Headers.Add("sec-fetch-site", "same-origin");
+                _webClient.Headers.Add("sec-ch-ua-platform", "Windows");
+                _webClient.Headers.Add("sec-ch-ua-mobile", "?0");
+                _webClient.Headers.Add("authority", "www.floridakeyssingles.com");
+
+                var formData = new Dictionary<string, string>()
+                                {
+            {"form_name","sign-in" },
+            {"csrf_token", crsfValue },
+            {"identity",$"{username}" },
+            {"password",$"{password}"},
+            {"remember","on" },
+                                };
+
+                var content = new FormUrlEncodedContent(formData);
+                string moded = await content.ReadAsStringAsync();
+                moded += "&";
+                byte[] byResp = await _webClient.UploadDataTaskAsync(new Uri(url), "POST", Encoding.UTF8.GetBytes(moded));
+                string resp = Encoding.UTF8.GetString(byResp);
+                if (!string.IsNullOrEmpty(resp))
+                {
+                    res = JsonConvert.DeserializeObject<Response>(resp);
+                    return res;
+                }
+                else
+                {
+                    throw new Exception("Login failed");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return res;
         }
-       
-        }
-    
+
+
+    }
+}
 

@@ -29,7 +29,7 @@ namespace FloridaKeysSingles
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
             HttpTunnel tunnel = new HttpTunnel();
-            Response res = await tunnel.Login(Username.Text,Password.Text);
+            Response res = await tunnel.PostData(Username.Text,Password.Text);
             
                 MessageBox.Show($"{res.Result} {res.Message}");
                   
